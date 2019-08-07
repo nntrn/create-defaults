@@ -1,0 +1,17 @@
+{
+  "name": "create-defaults",
+  "version": "0.0.1",
+  "description": "simple file generator for commonly created files",
+  "main": "index.js",
+  "bin": {
+    "defaults": "./index.js"
+  },
+  "scripts": {
+    "make": "node ./index.js"
+  },
+  "keywords": [
+    "generator"
+  ],
+  "author": "annie tran (https://github.com/nntrn)",
+  "license": "MIT"
+}
