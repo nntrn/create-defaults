@@ -1,6 +1,6 @@
 # create-defaults
 
-A simple generator for creating everyday files
+A simple generator for creating default files in a directory
 
 ## Install
 
@@ -12,13 +12,13 @@ npm install create-defaults --global
 
 ## Usage
 
-1\. Create/update all files listed in `.defaults`
+### Create/update all files listed in `.defaults`
 
 ```sh
 $ defaults
 ```
 
-2\. Create/update **specified** file(s)
+### Create/update **specified** file(s)
 
 ```sh
 $ defaults file-name1 file-name2
@@ -45,7 +45,7 @@ Configuration settings are determined by the closest `.defaults` file to the cur
 
 example:
 
-```
+```json
 {
   "writeFiles": [
     {
@@ -63,9 +63,3 @@ example:
 - `update: true` will update and override `.gitignore` with default values (should be used with caution)
 
 - `src/components/index.js` will recursively create **`src/`** and **`components/`** (if it doesn't already exist) and then create `index.js`
-
-|                        | type    | default |
-| ---------------------- | ------- | ------- |
-| **name**, _required_   | string  |         |
-| **value**, _optional_  | array   | []      |
-| **update**, _optional_ | boolean | false   |

@@ -92,9 +92,7 @@ function doSomethingWithFiles(settings, userDefinedFiles = []) {
 
 /* run ********************************************/
 
-function init() {
+(function () {
   const [, , ...args] = process.argv
   doSomethingWithFiles(findDefaultsFile(), args)
-}
-
-init()
+})()

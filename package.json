@@ -1,6 +1,6 @@
 {
   "name": "create-defaults",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "simple file generator for commonly created files",
   "main": "index.js",
   "bin": {
