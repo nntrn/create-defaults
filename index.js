@@ -38,7 +38,8 @@ function findDefaultsFile() {
     var defaultsPath = path.join(newCwd, defaultsFileName)
     if (fileExists(defaultsPath)) {
       settings = JSON.parse(fs.readFileSync(defaultsPath))
-      console.log(`\n### defaults taken from ###\n${newCwd}\n`)
+      console.log('configuration file taken from:')
+      console.log(newCwd+'\n')
       break
     }
     // go up one directory
@@ -66,33 +67,40 @@ function doSomethingWithFiles(settings, userDefinedFiles = []) {
   }
 
   files.forEach(file => {
-    if (file.name && file.name.slice(-1) !== '/') {
-      var fileValue = file.value || []
-      var writeFileName = path.normalize(file.name)
-      var filePath = path.join(path.resolve(), writeFileName)
-
-      if (file.name.indexOf(path.sep))
-        createDirectories('.' + path.sep + path.dirname(writeFileName))
-
-      summary[
-        fileExists(filePath)
-          ? file.update || didUserDefineFiles
-            ? 'updated'
-            : 'ignored'
-          : 'created'
-      ].push(file.name)
-
-      if (file.update || didUserDefineFiles || !fileExists(filePath))
-        fs.writeFileSync(filePath, fileValue.join('\n'))
+    if (!file.name) {
+      return
     }
+
+    if (file.name.slice(-1) === '/') {
+      const dirPaths = '.' + path.sep + path.normalize(file.name)
+      createDirectories(dirPaths)
+      return
+    }
+
+    var fileValue = file.value || []
+    var writeFileName = path.normalize(file.name)
+    var filePath = path.join(path.resolve(), writeFileName)
+
+    if (file.name.indexOf(path.sep)) {
+      createDirectories('.' + path.sep + path.dirname(writeFileName))
+    }
+
+    summary[
+      fileExists(filePath)
+        ? file.update || didUserDefineFiles
+          ? 'updated'
+          : 'ignored'
+        : 'created'
+    ].push(file.name)
+
+    if (file.update || didUserDefineFiles || !fileExists(filePath))
+      fs.writeFileSync(filePath, fileValue.join('\n'))
   })
 
-  console.log(`\n### summary ###\n${JSON.stringify(summary, null, 2)}`)
+  console.log(JSON.stringify(summary, null, 2))
 }
 
-/* run ********************************************/
-
-(function () {
+(function init() {
   const [, , ...args] = process.argv
   doSomethingWithFiles(findDefaultsFile(), args)
-})()
+}())
