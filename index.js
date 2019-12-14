@@ -2,86 +2,41 @@
 
 const fs = require('fs')
 const path = require('path')
-const os = require('os')
-const home = os.homedir()
 
-const defaultsFileName = '.defaults'
-const cwd = path.parse(process.cwd())
+const { fileExists, createDirectories } = require('./lib/utils')
 
-/* helpers ********************************************/
+const settings = require('./lib/settings')
 
-function fileExists(filepath) {
-  try {
-    fs.lstatSync(filepath)
-    return true
-  } catch (e) {
-    return false
-  }
-}
+function doSomethingWithFiles(userDefinedFiles = []) {
+  if (!settings) return
 
-function createDirectories(createPath) {
-  fs.mkdirSync(createPath, { recursive: true }, err => {
-    if (err) throw err
-  })
-}
-
-/* main functions ********************************************/
-
-function findDefaultsFile() {
-  const dirs = cwd.dir.split(path.sep)
-
-  var newCwd = process.cwd()
-  var settings = {}
-
-  // iteratively find .defaults file starting in the current working directory
-  for (let e in dirs) {
-    var defaultsPath = path.join(newCwd, defaultsFileName)
-    if (fileExists(defaultsPath)) {
-      settings = JSON.parse(fs.readFileSync(defaultsPath))
-      console.log('configuration file taken from:')
-      console.log(newCwd+'\n')
-      break
-    }
-    // go up one directory
-    newCwd = path.dirname(newCwd)
-
-    if (newCwd === path.dirname(home)) {
-      console.log(`\ndid not find ${defaultsFileName} file`)
-      break
-    }
-  }
-  return settings
-}
-
-// if userDefinedFiles is not empty, then only these files are created/updated
-function doSomethingWithFiles(settings, userDefinedFiles = []) {
-  if (!settings.writeFiles) return
-
-  var files = [...settings.writeFiles]
+  var files = settings
   var didUserDefineFiles = false
-  var summary = { created: [], updated: [], ignored: [], noaction: [] }
+  var summary = {
+    created: [], updated: [], ignored: [], noaction: [],
+  }
 
   if (userDefinedFiles.length > 0) {
-    files = files.filter(e => userDefinedFiles.indexOf(e.name) > -1)
+    const fileNames = userDefinedFiles.map(e => e.name)
+    files = files
+      .filter(e => fileNames.indexOf(e.name) > -1)
+      .map((f, index) => ({
+        ...f, fileName: userDefinedFiles[index].new,
+      }))
     didUserDefineFiles = true
   }
 
   files.forEach(file => {
-    if (!file.name) {
-      return
-    }
-
     if (file.name.slice(-1) === '/') {
       const dirPaths = '.' + path.sep + path.normalize(file.name)
       createDirectories(dirPaths)
       return
     }
 
-    var fileValue = file.value || []
-    var writeFileName = path.normalize(file.name)
-    var filePath = path.join(path.resolve(), writeFileName)
+    var writeFileName = path.normalize(file.fileName)
+    var filePath = path.join(path.resolve(), file.fileName)
 
-    if (file.name.indexOf(path.sep)) {
+    if (file.fileName.indexOf(path.sep)) {
       createDirectories('.' + path.sep + path.dirname(writeFileName))
     }
 
@@ -93,14 +48,32 @@ function doSomethingWithFiles(settings, userDefinedFiles = []) {
         : 'created'
     ].push(file.name)
 
-    if (file.update || didUserDefineFiles || !fileExists(filePath))
-      fs.writeFileSync(filePath, fileValue.join('\n'))
+    if (file.update || didUserDefineFiles || !fileExists(filePath)) {
+      fs.writeFileSync(filePath, file.template)
+    }
   })
 
   console.log(JSON.stringify(summary, null, 2))
 }
 
-(function init() {
+function init() {
   const [, , ...args] = process.argv
-  doSomethingWithFiles(findDefaultsFile(), args)
-}())
+  const cliForCustomName = '--as'
+  const re = new RegExp(`(\\S+\\s${cliForCustomName}\\s\\S+)\\s?`)
+
+  const fileNames = args
+    .join(' ')
+    .split(re)
+    .filter(Boolean)
+    .map(f => {
+      var names = f.split(' ')
+      return {
+        name: names[0],
+        new: names.slice(-1).toString(),
+      }
+    })
+
+  doSomethingWithFiles(fileNames)
+}
+
+init()
